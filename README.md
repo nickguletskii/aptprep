@@ -42,9 +42,7 @@ The pre-commit hook will automatically format:
 - Config files with `prettier`
 
 ### Manual Formatting
-- Format Rust: `cargo fmt`
-- Format Bazel: `buildifier $(find . -name "*.bzl" -o -name "BUILD*" -o -name "MODULE.bazel")`
-- Format configs: `pnpx prettier --write "**/*.{toml,yml,yaml,json}"`
+Use the format script: `./scripts/format.sh`
 
 ## Usage
 
