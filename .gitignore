@@ -7,7 +7,6 @@
 # Node.js / pnpm
 node_modules/
 .pnpm-debug.log*
-pnpm-lock.yaml
 
 # CycloneDX SBOMs
 *.cdx.json
