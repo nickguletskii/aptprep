@@ -1,0 +1,67 @@
+load("@crates//:defs.bzl", "all_crate_deps")
+load("@rules_pkg//pkg:tar.bzl", "pkg_tar")
+load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_library")
+
+exports_files([
+    "Cargo.toml",
+    "Cargo.lock",
+])
+
+# Use the new workspace structure
+alias(
+    name = "aptprep",
+    actual = "//crates/aptprep-lib:aptprep-lib",
+    visibility = ["//visibility:public"],
+)
+
+alias(
+    name = "aptprep_bin",
+    actual = "//crates/aptprep-cli:aptprep",
+    visibility = ["//visibility:public"],
+)
+
+# Distribution package with binary and licenses
+pkg_tar(
+    name = "aptprep_dist",
+    srcs = [":aptprep_bin"],
+    package_dir = "/",
+    remap_paths = {
+        "crates/aptprep-cli/aptprep": "aptprep",
+    },
+    strip_prefix = ".",
+    visibility = ["//visibility:public"],
+)
+
+pkg_tar(
+    name = "aptprep_dist_licenses",
+    srcs = [
+        "LICENSE-APACHE",
+        "LICENSE-MIT",
+        "README.md",
+        "//tools/licenses:generate_sbom",
+        "//tools/licenses:license_bundle",
+    ],
+    remap_paths = {
+        "tools/licenses/THIRD_PARTY_LICENSES.txt": "THIRD_PARTY_LICENSES.txt",
+    },
+    visibility = ["//visibility:public"],
+)
+
+# Platform-specific distribution targets
+pkg_tar(
+    name = "aptprep_linux_x86_64",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":aptprep_dist",
+        ":aptprep_dist_licenses",
+    ],
+)
+
+pkg_tar(
+    name = "aptprep_linux_aarch64",
+    visibility = ["//visibility:public"],
+    deps = [
+        ":aptprep_dist",
+        ":aptprep_dist_licenses",
+    ],
+)

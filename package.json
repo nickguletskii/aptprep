@@ -1,0 +1,23 @@
+{
+  "name": "aptprep",
+  "private": true,
+  "packageManager": "pnpm@9.0.0",
+  "devDependencies": {
+    "lint-staged": "^15.0.0",
+    "prettier": "^3.0.0"
+  },
+  "lint-staged": {
+    "*.rs": [
+      "rustfmt --edition=2024"
+    ],
+    "*.{bzl,BUILD,BUILD.bazel}": [
+      "buildifier"
+    ],
+    "MODULE.bazel": [
+      "buildifier"
+    ],
+    "*.{yml,yaml,json}": [
+      "prettier --write"
+    ]
+  }
+}

@@ -1,0 +1,88 @@
+name: Build and Package
+
+on:
+  push:
+    branches: [main, master]
+    tags: ["v*"]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  # Run tests first
+  test:
+    uses: ./.github/workflows/test.yml
+
+  build:
+    needs: test
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    container:
+      image: node:22
+      volumes:
+        - "/usr/local/share/ca-certificates:/usr/local/share/ca-certificates"
+    strategy:
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            config: linux-x86_64
+            archive: tar.gz
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5.0.0
+
+      - name: Setup Bazel
+        uses: bazel-contrib/setup-bazel@0.15.0
+        with:
+          bazelisk-cache: true
+          bazelisk-version: "1.27.0"
+          disk-cache: ${{ github.workflow }}
+          repository-cache: true
+
+      - name: Build distribution package
+        run: |
+          if [ "${{ matrix.target }}" = "x86_64-unknown-linux-gnu" ]; then
+            bazel build --config=${{ matrix.config }} //:aptprep_linux_x86_64
+            DIST_TARGET="aptprep_linux_x86_64"
+          elif [ "${{ matrix.target }}" = "aarch64-unknown-linux-gnu" ]; then
+            bazel build --config=${{ matrix.config }} //:aptprep_linux_aarch64
+            DIST_TARGET="aptprep_linux_aarch64"
+          else
+            echo "Unsupported target: ${{ matrix.target }}"
+            exit 1
+          fi
+          echo "DIST_TARGET=$DIST_TARGET" >> $GITHUB_ENV
+
+      - name: Rename distribution package
+        run: |
+          mv bazel-bin/${DIST_TARGET}.tar aptprep-${{ matrix.target }}.tar.gz
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: aptprep-${{ matrix.target }}
+          path: aptprep-${{ matrix.target }}.${{ matrix.archive }}
+          retention-days: 30
+
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/**/*
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

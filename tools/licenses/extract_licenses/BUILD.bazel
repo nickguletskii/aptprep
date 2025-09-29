@@ -1,0 +1,17 @@
+load("@rules_rust//rust:defs.bzl", "rust_binary")
+
+rust_binary(
+    name = "extract_licenses",
+    srcs = ["src/main.rs"],
+    edition = "2024",
+    visibility = ["//visibility:public"],
+    deps = [
+        "@extract_licenses_crates//:base64",
+        "@extract_licenses_crates//:clap",
+        "@extract_licenses_crates//:eyre",
+        "@extract_licenses_crates//:serde",
+        "@extract_licenses_crates//:serde_json",
+        "@extract_licenses_crates//:sha2",
+        "@extract_licenses_crates//:spdx",
+    ],
+)

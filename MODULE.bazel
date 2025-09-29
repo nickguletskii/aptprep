@@ -1,0 +1,91 @@
+"""MODULE.bazel file for aptprep."""
+
+module(
+    name = "aptprep",
+    version = "0.1.0",
+)
+
+bazel_dep(name = "bazel_skylib", version = "1.8.2")
+bazel_dep(name = "platforms", version = "1.0.0")
+bazel_dep(name = "rules_rust", version = "0.65.0")
+
+bazel_dep(name = "toolchains_llvm", version = "1.5.0", dev_dependency = True)
+
+bazel_dep(name = "rules_pkg", version = "1.1.0")
+bazel_dep(name = "aspect_bazel_lib", version = "2.9.4")
+
+# Needed for rules_pkg
+bazel_dep(name = "rules_python", version = "1.6.3")
+
+# For license bundling
+http_file = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_file")
+
+http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+
+# CycloneDX cargo plugin
+http_archive(
+    name = "cargo_cyclonedx",
+    build_file_content = """
+filegroup(
+    name = "cargo_cyclonedx_bin",
+    srcs = ["cargo-cyclonedx"],
+    visibility = ["//visibility:public"],
+)
+""",
+    sha256 = "c28d86750e2dd5ed9a325f148e2e625ba8ce574ce580fb5e9ace913a1b20f403",
+    strip_prefix = "cargo-cyclonedx-x86_64-unknown-linux-gnu",
+    url = "https://github.com/CycloneDX/cyclonedx-rust-cargo/releases/download/cargo-cyclonedx-0.5.7/cargo-cyclonedx-x86_64-unknown-linux-gnu.tar.xz",
+)
+
+# SPDX license repository
+spdx_license_repo = use_repo_rule("//tools/licenses:spdx_repo.bzl", "spdx_license_repo")
+
+spdx_license_repo(name = "spdx_licenses")
+
+# LLVM toolchain
+
+llvm = use_extension("@toolchains_llvm//toolchain/extensions:llvm.bzl", "llvm", dev_dependency = True)
+llvm.toolchain(
+    name = "llvm_toolchain",
+    llvm_version = "20.1.8",
+)
+use_repo(llvm, "llvm_toolchain")
+
+register_toolchains(
+    "@llvm_toolchain//:all",
+    dev_dependency = True,
+)
+
+# Rust toolchain
+RUST_EDITION = "2024"
+
+RUST_VERSION = "1.90.0"
+
+rust = use_extension("@rules_rust//rust:extensions.bzl", "rust")
+rust.toolchain(
+    edition = RUST_EDITION,
+    extra_target_triples = [
+        "x86_64-unknown-linux-gnu",
+        "aarch64-unknown-linux-gnu",
+        "x86_64-apple-darwin",
+        "aarch64-apple-darwin",
+        "x86_64-pc-windows-msvc",
+    ],
+    versions = [RUST_VERSION],
+)
+use_repo(rust, "rust_toolchains")
+
+register_toolchains("@rust_toolchains//:all")
+
+crate = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate")
+crate.from_cargo(
+    name = "crates",
+    cargo_lockfile = "//:Cargo.lock",
+    manifests = ["//:Cargo.toml"],
+)
+crate.from_cargo(
+    name = "extract_licenses_crates",
+    cargo_lockfile = "//tools/licenses/extract_licenses:Cargo.lock",
+    manifests = ["//tools/licenses/extract_licenses:Cargo.toml"],
+)
+use_repo(crate, "crates", "extract_licenses_crates")

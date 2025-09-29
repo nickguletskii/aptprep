@@ -1,0 +1,64 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/aptprep-lib",
+    "crates/aptprep-cli",
+    "crates/aptprep-e2e-tests",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2024"
+license = "Apache-2.0 OR MIT"
+homepage = "https://github.com/nickguletskii/aptprep"
+repository = "https://github.com/nickguletskii/aptprep"
+authors = ["Nick Guletskii <nick@nickguletskii.com>"]
+
+[workspace.dependencies]
+# Core async runtime
+tokio = { version = "1.47.1", features = ["full"] }
+
+# HTTP client
+reqwest = { version = "0.12.23", features = ["default"] }
+
+# Debian package handling
+debian-packaging = { git = "https://github.com/nickguletskii/linux-packaging-rs.git", features = ["default", "reqwest"], rev = "200d282a45b9125d84d65aaabdb8021c2d67ea26" }
+
+# Logging and error handling
+tracing = { version = "0.1.41", features = ["default", "std"] }
+tracing-subscriber = { version = "0.3.19", features = ["serde", "chrono", "env-filter", "parking_lot", "once_cell", "fmt"] }
+eyre = { version = "0.6.12" }
+color-eyre = { version = "0.6.5", features = ["capture-spantrace", "color-spantrace", "tracing-error"] }
+thiserror = { version = "2.0.16", features = ["default", "std"] }
+
+# Serialization
+serde = { version = "1.0.219", features = ["default", "std", "rc", "derive"] }
+serde_json = { version = "1.0", features = ["std"] }
+
+# Configuration
+config = { version = "0.15.14", features = ["default", "yaml", "toml"] }
+
+# CLI
+clap = { version = "4.5.45", features = ["default", "color", "derive", "error-context"] }
+
+# Utilities
+itertools = { version = "0.14.0", features = ["use_std"] }
+futures = { version = "0.3.31", features = ["default", "std"] }
+bumpalo = { version = "3.19.0" }
+hex = { version = "0.4" }
+url = { version = "2.5.4" }
+
+# Dependency resolution
+pubgrub = { version = "0.3.0", features = ["serde"] }
+
+# File operations
+opendal = { version = "0.54.0", features = ["executors-tokio", "layers-throttle", "layers-tracing", "services-http"] }
+
+# Cryptography
+sha2 = { version = "0.10.9", features = ["std"] }
+sha1 = { version = "0.10.6", features = ["default", "std"] }
+md-5 = { version = "0.10.6", features = ["std"] }
+digest = { version = "0.10.6", features = ["std"] }
+
+# Internal workspace crates
+aptprep-lib = { path = "crates/aptprep-lib" }

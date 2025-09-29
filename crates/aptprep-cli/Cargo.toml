@@ -1,0 +1,30 @@
+[package]
+name = "aptprep-cli"
+description = "Command-line interface for aptprep - resolve Debian package dependencies for air-gapped environments"
+keywords = ["debian", "packages", "dependencies"]
+categories = ["development-tools", "command-line-utilities"]
+readme = "../../README.md"
+
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[[bin]]
+name = "aptprep"
+path = "src/main.rs"
+
+[dependencies]
+# Core library
+aptprep-lib = { workspace = true }
+
+# Error handling - needed for main error handling
+color-eyre = { workspace = true }
+
+# CLI framework
+clap = { workspace = true }
+
+# Async runtime
+tokio = { workspace = true }

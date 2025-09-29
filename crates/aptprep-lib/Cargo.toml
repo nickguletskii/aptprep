@@ -1,0 +1,60 @@
+[package]
+name = "aptprep-lib"
+description = "Core library for resolving Debian package dependencies for air-gapped environments"
+keywords = ["debian", "packages", "dependencies"]
+categories = ["development-tools"]
+readme = "../../README.md"
+
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+homepage.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[dependencies]
+# Core async runtime
+tokio = { workspace = true }
+
+# HTTP client
+reqwest = { workspace = true }
+
+# Debian package handling
+debian-packaging = { workspace = true }
+
+# Logging and error handling
+tracing = { workspace = true }
+eyre = { workspace = true }
+thiserror = { workspace = true }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Configuration
+config = { workspace = true }
+
+# CLI framework
+clap = { workspace = true }
+
+# Logging setup (for tracing subscriber in CLI args)
+tracing-subscriber = { workspace = true }
+
+# Utilities
+itertools = { workspace = true }
+futures = { workspace = true }
+bumpalo = { workspace = true }
+hex = { workspace = true }
+url = { workspace = true }
+
+# Dependency resolution
+pubgrub = { workspace = true }
+
+# File operations
+opendal = { workspace = true }
+
+# Cryptography
+sha2 = { workspace = true }
+sha1 = { workspace = true }
+md-5 = { workspace = true }
+digest = { workspace = true }

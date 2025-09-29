@@ -1,0 +1,33 @@
+load("@aspect_bazel_lib//lib:write_source_files.bzl", "write_source_files")
+load(":cargo_cyclonedx.bzl", "cargo_cyclonedx")
+
+# Generate SBOM using cargo-cyclonedx
+cargo_cyclonedx(
+    name = "generate_sbom",
+    cyclonedx_binary = "@cargo_cyclonedx//:cargo_cyclonedx_bin",
+    expected_outputs = [
+        "aptprep-cli.cdx.json",
+    ],
+    lockfile = "//:Cargo.lock",
+    manifest = "//:Cargo.toml",
+    visibility = ["//visibility:public"],
+)
+
+# Bundle licenses from CDX SBOM using local SPDX repository (Rust implementation)
+alias(
+    name = "extract_licenses_from_cdx_tool",
+    actual = "//tools/licenses/extract_licenses",
+    visibility = ["//visibility:public"],
+)
+
+genrule(
+    name = "license_bundle",
+    srcs = [
+        ":generate_sbom",
+        "@spdx_licenses//:all_files",
+    ],
+    outs = ["THIRD_PARTY_LICENSES.txt"],
+    cmd = "$(location :extract_licenses_from_cdx_tool) $(locations :generate_sbom) --spdx-repo $$(dirname $$(echo $(locations @spdx_licenses//:all_files) | cut -d' ' -f1)) --output-file $@",
+    tools = [":extract_licenses_from_cdx_tool"],
+    visibility = ["//visibility:public"],
+)

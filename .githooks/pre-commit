@@ -1,0 +1,18 @@
+#!/bin/sh
+# Git pre-commit hook for lint-staged
+
+# Check if pnpx is available
+if ! command -v pnpx >/dev/null 2>&1; then
+    echo "Warning: pnpx not found, skipping lint-staged"
+    echo "Install pnpm and run 'pnpm install' to install dependencies"
+    exit 0
+fi
+
+# Check if package.json exists
+if [ ! -f "package.json" ]; then
+    echo "Warning: package.json not found, skipping lint-staged"
+    exit 0
+fi
+
+# Run lint-staged
+pnpx lint-staged
