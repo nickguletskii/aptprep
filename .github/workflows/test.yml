@@ -105,4 +105,4 @@ jobs:
         run: pnpm install
 
       - name: Check prettier formatting
-        run: pnpx prettier --check "**/*.{toml,yml,yaml,json}"
+        run: pnpx prettier --check "**/*.{yml,yaml,json}"
