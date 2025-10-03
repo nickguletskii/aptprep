@@ -685,9 +685,9 @@
         "recordedFileInputs": {
           "@@//Cargo.lock": "6198fad7a45050ee298a9efd6c6b44a4aec92452f93eca215f698edb18d7f930",
           "@@//Cargo.toml": "9bdc108e57726c92717013d1f6ba43c40e4bad3fdda1883c442bf54d7b934d45",
-          "@@//crates/aptprep-cli/Cargo.toml": "23bbcf82c2b6b7bb49e21c95a199fcf60a94bfddb36dc55c67830851d2b2bd33",
+          "@@//crates/aptprep-cli/Cargo.toml": "176c9aa98a4fcb30c23d3ed8f67533140c61aca69bb5828969a42fd91c6f12b0",
           "@@//crates/aptprep-e2e-tests/Cargo.toml": "3ac4d7b39387a3f5986f422cae5697e2c4aaafe4b3b82351c2b38df3ca088b5a",
-          "@@//crates/aptprep-lib/Cargo.toml": "19b39f0b2477aae6d7bf7dd0af15a0bd9c364c56de2203de1f5646ac151be602",
+          "@@//crates/aptprep-lib/Cargo.toml": "adf502aef14a15498c22266251f2b687c46e8689922f226cae30c5e757b5f20d",
           "@@//tools/licenses/extract_licenses/Cargo.lock": "a0a82eafb947bf07294400de88eb48ab77af895a6d9d58d3d8a5af96cab7e776",
           "@@//tools/licenses/extract_licenses/Cargo.toml": "ff43226192727d523b71e2114277e7c4de4421aa7e877fd087f435c7a082df00"
         },

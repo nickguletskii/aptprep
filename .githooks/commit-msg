@@ -1,7 +1,7 @@
 #!/bin/bash
 set -eu
 set -o pipefail
-# Git pre-commit hook for lint-staged
+# Git commit-msg hook for commitlint
 
 # Check if pnpx is available
 if ! command -v pnpx >/dev/null 2>&1; then
@@ -16,5 +16,5 @@ if [ ! -f "package.json" ]; then
     exit 0
 fi
 
-# Run lint-staged
-pnpx lint-staged
+# Run commitlint on the commit message
+pnpx commitlint --edit "$1"

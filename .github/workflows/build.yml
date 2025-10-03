@@ -1,0 +1,45 @@
+name: Build and Package
+
+on:
+  push:
+    branches: [main, master]
+    tags: ["v*"]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  # Run tests first
+  test:
+    uses: ./.github/workflows/test.yml
+
+  build:
+    needs: test
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    container:
+      image: node:22
+      volumes:
+        - "/usr/local/share/ca-certificates:/usr/local/share/ca-certificates"
+    strategy:
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            os: ubuntu-latest
+            config: linux-x86_64
+            archive: tar.gz
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5.0.0
+
+      - name: Setup Bazel
+        uses: bazel-contrib/setup-bazel@0.15.0
+        with:
+          bazelisk-cache: true
+          bazelisk-version: "1.27.0"
+          disk-cache: ${{ github.workflow }}
+          repository-cache: true
+
+      - name: Build Linux x86_64 artifact
+        run: |
+          bazel build --config=release --platforms=//platforms:linux_x86_64 //:aptprep_linux_x86_64
