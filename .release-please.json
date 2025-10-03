@@ -1,5 +1,5 @@
 {
-  "release-type": "rust",
+  "release-type": "simple",
   "changelog-sections": [
     { "type": "feat", "section": "Features" },
     { "type": "fix", "section": "Bug Fixes" },
@@ -14,6 +14,11 @@
     { "type": "ci", "section": "Continuous Integration", "hidden": true }
   ],
   "extra-files": [
+    {
+      "type": "generic",
+      "path": "Cargo.toml",
+      "glob": false
+    },
     {
       "type": "generic",
       "path": "MODULE.bazel",
