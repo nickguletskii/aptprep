@@ -8,6 +8,7 @@ use debian_packaging::dependency::{
 use debian_packaging::package_version::PackageVersion;
 use itertools::Itertools;
 use pubgrub::{Dependencies, DependencyProvider, Map, PackageResolutionStatistics, Ranges};
+use std::cmp::Ordering;
 use std::collections::{BTreeMap, HashMap};
 use std::fmt::{Display, Formatter};
 use std::sync::Arc;
@@ -80,23 +81,101 @@ impl Display for AptDependencyGraphElement {
         }
     }
 }
+#[derive(Clone, Debug, PartialEq, Eq, Ord)]
+pub enum Priority {
+    SingleVersion {
+        version: AptVersion,
+        conflict_count: u32,
+    },
+    MultipleVersions {
+        conflict_count: u32,
+    },
+}
 
+impl PartialOrd for Priority {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        match (self, other) {
+            (
+                Priority::SingleVersion {
+                    version: l_version,
+                    conflict_count: l_conflict_count,
+                },
+                Priority::SingleVersion {
+                    version: r_version,
+                    conflict_count: r_conflict_count,
+                },
+            ) => {
+                if l_conflict_count == r_conflict_count {
+                    return Some(l_version.partial_cmp(r_version)?);
+                } else {
+                    return Some(l_conflict_count.partial_cmp(r_conflict_count)?.reverse());
+                }
+            }
+            (
+                Priority::SingleVersion {
+                    version: l_version,
+                    conflict_count: l_conflict_count,
+                },
+                Priority::MultipleVersions {
+                    conflict_count: r_conflict_count,
+                },
+            ) => return Some(Ordering::Greater),
+            (
+                Priority::MultipleVersions {
+                    conflict_count: l_conflict_count,
+                },
+                Priority::SingleVersion {
+                    version: r_version,
+                    conflict_count: r_conflict_count,
+                },
+            ) => return Some(Ordering::Less),
+            (
+                Priority::MultipleVersions {
+                    conflict_count: l_conflict_count,
+                },
+                Priority::MultipleVersions {
+                    conflict_count: r_conflict_count,
+                },
+            ) => {
+                if l_conflict_count == r_conflict_count {
+                    return Some(Ordering::Equal);
+                } else {
+                    return Some(l_conflict_count.partial_cmp(r_conflict_count)?.reverse());
+                }
+            }
+        }
+    }
+}
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct Incompatibility {}
+impl Display for Incompatibility {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Incompatibility").finish()
+    }
+}
 impl DependencyProvider for AptDependencyProvider {
     type P = AptDependencyGraphElement;
     type V = AptVersion;
     type VS = Ranges<AptVersion>;
-    type Priority = (AptDependencyGraphElement, Ranges<AptVersion>);
-    type M = String;
+    type Priority = Priority;
+    type M = Incompatibility;
     type Err = DependencyResolutionError;
 
     fn prioritize(
         &self,
         package: &Self::P,
         range: &Self::VS,
-        _package_conflicts_counts: &PackageResolutionStatistics,
+        package_conflicts_counts: &PackageResolutionStatistics,
     ) -> Self::Priority {
-        // Simple strategy to make resolutions consistent
-        (package.clone(), range.clone())
+        match range.as_singleton() {
+            None => Priority::MultipleVersions {
+                conflict_count: package_conflicts_counts.conflict_count(),
+            },
+            Some(singleton) => Priority::SingleVersion {
+                version: singleton.clone(),
+                conflict_count: package_conflicts_counts.conflict_count(),
+            },
+        }
     }
 
     fn choose_version(
@@ -155,9 +234,7 @@ impl DependencyProvider for AptDependencyProvider {
         match package {
             AptDependencyGraphElement::AptPackage(package) => {
                 let Some(package_data) = self.binary_packages.get(package.as_ref()) else {
-                    return Err(DependencyResolutionError::ConfigError(
-                        "Package not found".to_string(),
-                    ));
+                    return Ok(Dependencies::Unavailable(Incompatibility {}));
                 };
                 let Some(control) = package_data.dependencies_by_version.get(version) else {
                     tracing::warn!(
@@ -170,9 +247,7 @@ impl DependencyProvider for AptDependencyProvider {
                             .map(|version| format!("{}", version))
                             .join(", ")
                     );
-                    return Err(DependencyResolutionError::ConfigError(
-                        "Version not found".to_string(),
-                    ));
+                    return Ok(Dependencies::Unavailable(Incompatibility {}));
                 };
                 Ok(Dependencies::Available(control.dependencies.clone()))
             }
@@ -196,7 +271,7 @@ impl DependencyProvider for AptDependencyProvider {
                                 .version_constraint
                                 .map(|v| to_ranges(&v))
                                 .unwrap_or_else(Ranges::full);
-                            // We don't needd to check the requested architecture here because `RequestedPackages` should only contain packages relevant to the architecture
+                            // We don't need to check the requested architecture here because `RequestedPackages` should only contain packages relevant to the architecture
                             Ok::<_, DependencyResolutionError>((apt_package, version_range))
                         })
                         .collect::<Result<_, _>>()?,

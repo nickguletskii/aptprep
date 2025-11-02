@@ -3,8 +3,8 @@ use crate::download::{DownloadItem, download_and_check_all};
 use crate::error::AptPrepError;
 use crate::lockfile::Lockfile;
 use crate::output::generate_packages_file_from_lockfile;
-use debian_packaging::io::ContentDigest;
-use debian_packaging::repository::release::ChecksumType;
+use debian_packaging::checksum::AnyChecksumType;
+use debian_packaging::checksum::AnyContentDigest;
 use std::path::Path;
 use tracing;
 
@@ -40,9 +40,9 @@ pub async fn run_download(config_path: &str, lockfile_path: &str) -> Result<(), 
     for package in lockfile.packages.values() {
         // Parse the digest
         let checksum_type = match package.digest.algorithm.as_str() {
-            "MD5Sum" => ChecksumType::Md5,
-            "SHA1" => ChecksumType::Sha1,
-            "SHA256" => ChecksumType::Sha256,
+            "MD5Sum" => AnyChecksumType::Md5,
+            "SHA1" => AnyChecksumType::Sha1,
+            "SHA256" => AnyChecksumType::Sha256,
             _ => {
                 return Err(AptPrepError::PackageVerification {
                     package: "unknown".to_string(),
@@ -52,7 +52,7 @@ pub async fn run_download(config_path: &str, lockfile_path: &str) -> Result<(), 
             }
         };
 
-        let digest = ContentDigest::from_hex_digest(checksum_type, &package.digest.value)?;
+        let digest = AnyContentDigest::from_hex_digest(checksum_type, &package.digest.value)?;
 
         // Extract filename from download URL
         let filename =

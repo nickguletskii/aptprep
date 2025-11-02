@@ -1,8 +1,9 @@
 use debian_packaging::binary_package_control::BinaryPackageControlFile;
-use debian_packaging::io::ContentDigest;
+use debian_packaging::checksum::{AnyChecksumType, AnyContentDigest};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
+use debian_packaging::control::ControlFile;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct LockfilePackageEntry {
@@ -20,6 +21,8 @@ pub struct LockfilePackageEntry {
     pub digest: LockfileDigest,
     /// Dependencies as package keys
     pub dependencies: Vec<String>,
+    /// Entire control file to prevent the need to read the deb archives while indexing
+    pub control_file: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -28,19 +31,27 @@ pub struct LockfileDigest {
     pub value: String,
 }
 
-impl From<&ContentDigest> for LockfileDigest {
-    fn from(digest: &ContentDigest) -> Self {
+impl From<&AnyContentDigest> for LockfileDigest {
+    fn from(digest: &AnyContentDigest) -> Self {
         match digest {
-            ContentDigest::Md5(bytes) => Self {
+            AnyContentDigest::Md5(bytes) => Self {
                 algorithm: "MD5Sum".to_string(),
                 value: hex::encode(bytes),
             },
-            ContentDigest::Sha1(bytes) => Self {
+            AnyContentDigest::Sha1(bytes) => Self {
                 algorithm: "SHA1".to_string(),
                 value: hex::encode(bytes),
             },
-            ContentDigest::Sha256(bytes) => Self {
+            AnyContentDigest::Sha256(bytes) => Self {
                 algorithm: "SHA256".to_string(),
+                value: hex::encode(bytes),
+            },
+            AnyContentDigest::Sha384(bytes) => Self {
+                algorithm: "SHA384".to_string(),
+                value: hex::encode(bytes),
+            },
+            AnyContentDigest::Sha512(bytes) => Self {
+                algorithm: "SHA512".to_string(),
                 value: hex::encode(bytes),
             },
         }
@@ -175,15 +186,11 @@ impl Lockfile {
             })??;
 
             // Find the preferred digest
-            let digest = debian_packaging::repository::release::ChecksumType::preferred_order()
+            let digest = AnyChecksumType::preferred_order()
                 .find_map(|checksum| {
                     control_file
                         .field_str(checksum.field_name())
-                        .map(|hex_digest| {
-                            debian_packaging::io::ContentDigest::from_hex_digest(
-                                checksum, hex_digest,
-                            )
-                        })
+                        .map(|hex_digest| AnyContentDigest::from_hex_digest(checksum, hex_digest))
                 })
                 .ok_or_else(|| crate::error::AptPrepError::LockfileValidation {
                     details: "No supported digest found".to_string(),
@@ -217,6 +224,7 @@ impl Lockfile {
                 size,
                 digest: LockfileDigest::from(&digest?),
                 dependencies,
+                control_file: control_file.to_string()
             };
 
             // Add to packages map

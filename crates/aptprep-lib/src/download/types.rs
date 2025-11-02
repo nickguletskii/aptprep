@@ -1,10 +1,10 @@
-use debian_packaging::io::ContentDigest;
+use debian_packaging::checksum::AnyContentDigest;
 
 #[derive(Clone, Debug)]
 pub struct DownloadItem {
     pub base_url: String,
     pub rel_path: String,
     pub size: Option<u64>,
-    pub digest: ContentDigest,
+    pub digest: AnyContentDigest,
     pub output_path: Option<String>, // Optional custom output path, relative to output_dir
 }

@@ -1,5 +1,4 @@
 mod args;
-mod commands;
 mod download;
 mod lock;
 

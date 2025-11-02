@@ -1,9 +1,6 @@
-use std::collections::HashMap;
-use std::sync::Arc;
-
 use super::types::DownloadItem;
 use crate::verification::content_digest_hasher::ContentDigestVerifier;
-use debian_packaging::io::ContentDigest;
+use debian_packaging::checksum::AnyContentDigest;
 use eyre::{Result, WrapErr, eyre};
 use futures::stream::{FuturesUnordered, StreamExt};
 use md5::Md5;
@@ -11,7 +8,9 @@ use opendal::Operator;
 use opendal::layers::{ConcurrentLimitLayer, RetryLayer};
 use opendal::services::Http;
 use sha1::Sha1;
-use sha2::{Digest as Sha2Digest, Sha256};
+use sha2::{Digest as Sha2Digest, Sha256, Sha384, Sha512};
+use std::collections::HashMap;
+use std::sync::Arc;
 use tracing::{info, warn};
 
 fn build_http_operator(
@@ -88,6 +87,8 @@ pub async fn download_and_check_all(
                 // Verify the digest of the existing file using streaming to avoid loading the entire file into memory
                 let mut sha1_hasher = Sha1::new();
                 let mut sha256_hasher = Sha256::new();
+                let mut sha384_hasher = Sha384::new();
+                let mut sha512_hasher = Sha512::new();
                 let mut md5_hasher = Md5::new();
 
                 let file = tokio::fs::File::open(&output_path)
@@ -107,22 +108,32 @@ pub async fn download_and_check_all(
 
                     // Only update the hasher for the expected digest type
                     tokio::task::block_in_place(|| match &it.digest {
-                        ContentDigest::Sha1(_) => sha1_hasher.update(&buffer[..bytes_read]),
-                        ContentDigest::Sha256(_) => sha256_hasher.update(&buffer[..bytes_read]),
-                        ContentDigest::Md5(_) => md5_hasher.update(&buffer[..bytes_read]),
+                        AnyContentDigest::Sha1(_) => sha1_hasher.update(&buffer[..bytes_read]),
+                        AnyContentDigest::Sha256(_) => sha256_hasher.update(&buffer[..bytes_read]),
+                        AnyContentDigest::Sha384(_) => sha384_hasher.update(&buffer[..bytes_read]),
+                        AnyContentDigest::Sha512(_) => sha512_hasher.update(&buffer[..bytes_read]),
+                        AnyContentDigest::Md5(_) => md5_hasher.update(&buffer[..bytes_read]),
                     });
                 }
 
                 let existing_digest_valid = match &it.digest {
-                    ContentDigest::Sha1(expected) => {
+                    AnyContentDigest::Sha1(expected) => {
                         let calculated = sha1_hasher.finalize();
                         calculated.as_slice() == expected.as_slice()
                     },
-                    ContentDigest::Sha256(expected) => {
+                    AnyContentDigest::Sha256(expected) => {
                         let calculated = sha256_hasher.finalize();
                         calculated.as_slice() == expected.as_slice()
                     },
-                    ContentDigest::Md5(expected) => {
+                    AnyContentDigest::Sha384(expected) => {
+                        let calculated = sha384_hasher.finalize();
+                        calculated.as_slice() == expected.as_slice()
+                    },
+                    AnyContentDigest::Sha512(expected) => {
+                        let calculated = sha512_hasher.finalize();
+                        calculated.as_slice() == expected.as_slice()
+                    },
+                    AnyContentDigest::Md5(expected) => {
                         let calculated = md5_hasher.finalize();
                         calculated.as_slice() == expected.as_slice()
                     },
@@ -142,7 +153,7 @@ pub async fn download_and_check_all(
             drop(permit);
 
             let _permit = download_semaphore.acquire_owned().await?;
-            tracing::info!(base = %key, path = %rel, output = %output_path.display(), "Downloading");
+            tracing::info!(base = %key, path = %rel, output = %output_path.display(), expected_digest = it.digest.digest_hex(), "Downloading");
 
             let mut hasher = ContentDigestVerifier::new(it.digest.clone());
 

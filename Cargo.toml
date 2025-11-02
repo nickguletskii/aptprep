@@ -22,7 +22,7 @@ tokio = { version = "1.47.1", features = ["full"] }
 reqwest = { version = "0.12.23", features = ["default"] }
 
 # Debian package handling
-debian-packaging = { git = "https://github.com/nickguletskii/linux-packaging-rs.git", features = ["default", "reqwest"], rev = "200d282a45b9125d84d65aaabdb8021c2d67ea26" }
+debian-packaging = { git = "https://github.com/nickguletskii/linux-packaging-rs.git", features = ["default", "reqwest"], rev = "98e764dc6802485646ec59a0522471c8e338802e" }
 
 # Logging and error handling
 tracing = { version = "0.1.41", features = ["default", "std"] }
