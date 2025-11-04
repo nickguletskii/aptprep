@@ -17,8 +17,9 @@ jobs:
       - uses: googleapis/release-please-action@v4
         id: release
         with:
-          release-type: rust
+          release-type: simple
           config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
 
   build-and-upload:
     runs-on: ubuntu-latest
