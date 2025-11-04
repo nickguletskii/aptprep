@@ -81,7 +81,7 @@ impl Display for AptDependencyGraphElement {
         }
     }
 }
-#[derive(Clone, Debug, PartialEq, Eq, Ord)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Priority {
     SingleVersion {
         version: AptVersion,
@@ -94,6 +94,12 @@ pub enum Priority {
 
 impl PartialOrd for Priority {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        self.cmp(other).into()
+    }
+}
+
+impl Ord for Priority {
+    fn cmp(&self, other: &Self) -> Ordering {
         match (self, other) {
             (
                 Priority::SingleVersion {
@@ -106,29 +112,29 @@ impl PartialOrd for Priority {
                 },
             ) => {
                 if l_conflict_count == r_conflict_count {
-                    return Some(l_version.partial_cmp(r_version)?);
+                    l_version.cmp(r_version)
                 } else {
-                    return Some(l_conflict_count.partial_cmp(r_conflict_count)?.reverse());
+                    l_conflict_count.cmp(r_conflict_count).reverse()
                 }
             }
             (
                 Priority::SingleVersion {
-                    version: l_version,
-                    conflict_count: l_conflict_count,
+                    version: _l_version,
+                    conflict_count: _l_conflict_count,
                 },
                 Priority::MultipleVersions {
-                    conflict_count: r_conflict_count,
+                    conflict_count: _r_conflict_count,
                 },
-            ) => return Some(Ordering::Greater),
+            ) => Ordering::Greater,
             (
                 Priority::MultipleVersions {
-                    conflict_count: l_conflict_count,
+                    conflict_count: _l_conflict_count,
                 },
                 Priority::SingleVersion {
-                    version: r_version,
-                    conflict_count: r_conflict_count,
+                    version: _r_version,
+                    conflict_count: _r_conflict_count,
                 },
-            ) => return Some(Ordering::Less),
+            ) => Ordering::Less,
             (
                 Priority::MultipleVersions {
                     conflict_count: l_conflict_count,
@@ -138,14 +144,15 @@ impl PartialOrd for Priority {
                 },
             ) => {
                 if l_conflict_count == r_conflict_count {
-                    return Some(Ordering::Equal);
+                    Ordering::Equal
                 } else {
-                    return Some(l_conflict_count.partial_cmp(r_conflict_count)?.reverse());
+                    l_conflict_count.cmp(r_conflict_count).reverse()
                 }
             }
         }
     }
 }
+
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Incompatibility {}
 impl Display for Incompatibility {
@@ -163,7 +170,7 @@ impl DependencyProvider for AptDependencyProvider {
 
     fn prioritize(
         &self,
-        package: &Self::P,
+        _package: &Self::P,
         range: &Self::VS,
         package_conflicts_counts: &PackageResolutionStatistics,
     ) -> Self::Priority {

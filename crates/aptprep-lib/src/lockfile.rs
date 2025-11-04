@@ -3,7 +3,6 @@ use debian_packaging::checksum::{AnyChecksumType, AnyContentDigest};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::Arc;
-use debian_packaging::control::ControlFile;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct LockfilePackageEntry {
@@ -224,7 +223,7 @@ impl Lockfile {
                 size,
                 digest: LockfileDigest::from(&digest?),
                 dependencies,
-                control_file: control_file.to_string()
+                control_file: control_file.to_string(),
             };
 
             // Add to packages map
