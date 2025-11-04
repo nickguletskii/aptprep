@@ -1,6 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/refs/heads/main/schemas/config.json",
-  "release-type": "rust",
+  "release-type": "simple",
   "include-component-in-tag": false,
   "changelog-sections": [
     {
@@ -59,6 +59,10 @@
         {
           "type": "generic",
           "path": "MODULE.bazel"
+        },
+        {
+          "type": "generic",
+          "path": "Cargo.toml"
         }
       ]
     }
