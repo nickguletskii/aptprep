@@ -66,5 +66,15 @@
         }
       ]
     }
-  }
+  },
+  "extra-files": [
+    {
+      "type": "generic",
+      "path": "MODULE.bazel"
+    },
+    {
+      "type": "generic",
+      "path": "Cargo.toml"
+    }
+  ]
 }
