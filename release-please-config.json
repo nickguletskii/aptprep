@@ -2,6 +2,7 @@
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/refs/heads/main/schemas/config.json",
   "release-type": "bazel",
   "include-component-in-tag": false,
+  "bootstrap-sha": "15416b2da686d11b5f38a967652a0924cca9727f",
   "changelog-sections": [
     {
       "type": "feat",
