@@ -1,9 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/refs/heads/main/schemas/config.json",
   "release-type": "rust",
-  "plugins": [
-    "cargo-workspace"
-  ],
+  "include-component-in-tag": false,
   "changelog-sections": [
     {
       "type": "feat",
@@ -56,14 +54,13 @@
     }
   ],
   "packages": {
-    "crates/aptprep-cli": {
-      "aptprep-cli": "aptprep-cli"
-    },
-    "crates/aptprep-lib": {
-      "aptprep-lib": "aptprep-lib"
-    },
-    "crates/aptprep-e2e-tests": {
-      "aptprep-e2e-tests": "aptprep-e2e-tests"
+    ".": {
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "MODULE.bazel"
+        }
+      ]
     }
   }
 }
