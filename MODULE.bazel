@@ -1,9 +1,4 @@
-"""MODULE.bazel file for aptprep."""
-
-module(
-    name = "aptprep",
-    version = "0.2.0",  # x-release-please-version
-)
+module(version = "0.2.0")
 
 bazel_dep(name = "bazel_skylib", version = "1.8.2")
 bazel_dep(name = "platforms", version = "1.0.0")
