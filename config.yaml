@@ -1,18 +1,18 @@
 output:
   path: "./packages"
-  target_architectures: [ "amd64" ]
+  target_architectures: ["amd64"]
 
 source_repositories:
   - source_url: "https://download.docker.com/linux/ubuntu"
-    architectures: [ "amd64" ]
-    distributions: [ "noble" ]
+    architectures: ["amd64"]
+    distributions: ["noble"]
   - source_url: "https://developer.download.nvidia.com/compute/cuda/repos/"
-    architectures: [ "x86_64" ]
+    architectures: ["x86_64"]
     distributions:
       - distribution_path: "ubuntu2404/x86_64"
   - source_url: "https://snapshot.ubuntu.com/ubuntu/20251029T140000Z"
-    architectures: [ "amd64" ]
-    distributions: [ "noble", "noble-updates" ]
+    architectures: ["amd64"]
+    distributions: ["noble", "noble-updates"]
 
 packages:
   # Nvidia
