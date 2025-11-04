@@ -1,6 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/googleapis/release-please/refs/heads/main/schemas/config.json",
-  "release-type": "simple",
+  "release-type": "rust",
   "changelog-sections": [
     {
       "type": "feat",
@@ -54,7 +54,13 @@
   ],
   "packages": {
     ".": {
-      "release-type": "rust"
+      "release-type": "rust",
+      "extra-files": [
+        {
+          "type": "generic",
+          "path": "MODULE.bazel"
+        }
+      ]
     }
   }
 }

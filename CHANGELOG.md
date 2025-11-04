@@ -7,30 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-- Initial implementation of aptprep command-line tool
-
-### Changed
-- N/A (initial release)
-
-### Deprecated
-- N/A (initial release)
-
-### Removed
-- N/A (initial release)
-
-### Fixed
-- N/A (initial release)
-
-### Security
-- N/A (initial release)
-
-## [0.1.0] - 2024-XX-XX
+## [0.2.0] - 2025-11-04
 
 ### Added
-- Initial release of aptprep
+- Baseline release establishing v0.2.0 as the first stable version
 
-### Technical Details
-
-[unreleased]: https://github.com/nickguletskii/aptprep/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/nickguletskii/aptprep/releases/tag/v0.1.0
+[unreleased]: https://github.com/nickguletskii/aptprep/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/nickguletskii/aptprep/releases/tag/v0.2.0
