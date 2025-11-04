@@ -57,20 +57,11 @@
     ".": {
       "extra-files": [
         {
-          "type": "generic",
-          "path": "MODULE.bazel"
-        },
-        {
-          "type": "generic",
-          "path": "Cargo.toml"
+          "type": "toml",
+          "path": "Cargo.toml",
+          "jsonpath": "$.workspace.package.version"
         }
       ]
     }
-  },
-  "extra-files": [
-    {
-      "type": "generic",
-      "path": "Cargo.toml"
-    }
-  ]
+  }
 }
