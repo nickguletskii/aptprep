@@ -5,6 +5,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.1.3](https://github.com/nickguletskii/aptprep/compare/v0.1.2...v0.1.3) (2025-12-16)
+
+
+### Bug Fixes
+
+* Work around incorrect upstream package versions used by the Ubuntu packaging team ([be1101f](https://github.com/nickguletskii/aptprep/commit/be1101f8a510f4f0a2518427601b1593bd2555ce))
+
 ## [0.1.2](https://github.com/nickguletskii/aptprep/compare/v0.1.1...v0.1.2) (2025-11-04)
 
 
