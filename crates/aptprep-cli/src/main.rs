@@ -1,4 +1,6 @@
-use aptprep_lib::cli::{Command, parse_args, run_download, run_lock};
+use aptprep_lib::cli::{
+    Command, parse_args, run_download, run_generate_packages_file_from_lockfile, run_lock,
+};
 use aptprep_lib::error::AptPrepError;
 
 #[tokio::main(flavor = "multi_thread")]
@@ -19,6 +21,12 @@ async fn main() -> Result<(), AptPrepError> {
             lockfile_path,
         } => {
             run_download(&config_path, &lockfile_path).await?;
+        }
+        Command::GeneratePackagesFileFromLockfile {
+            config_path,
+            lockfile_path,
+        } => {
+            run_generate_packages_file_from_lockfile(&config_path, &lockfile_path).await?;
         }
     }
 
