@@ -43,6 +43,8 @@ pub async fn run_download(config_path: &str, lockfile_path: &str) -> Result<(), 
             "MD5Sum" => AnyChecksumType::Md5,
             "SHA1" => AnyChecksumType::Sha1,
             "SHA256" => AnyChecksumType::Sha256,
+            "SHA384" => AnyChecksumType::Sha384,
+            "SHA512" => AnyChecksumType::Sha512,
             _ => {
                 return Err(AptPrepError::PackageVerification {
                     package: "unknown".to_string(),
