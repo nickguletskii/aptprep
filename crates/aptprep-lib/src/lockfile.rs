@@ -1,7 +1,12 @@
+mod package_name_and_version;
+
+use crate::utils::arch_matches;
 use debian_packaging::binary_package_control::BinaryPackageControlFile;
 use debian_packaging::checksum::{AnyChecksumType, AnyContentDigest};
+use debian_packaging::dependency::SingleDependency;
+use package_name_and_version::PackageNameAndVersion;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::sync::Arc;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
@@ -78,9 +83,9 @@ pub struct Lockfile {
     /// Required packages from config
     pub required_packages: Vec<Arc<str>>,
     /// Resolved packages by unique key
-    pub packages: HashMap<String, LockfilePackageEntry>,
+    pub packages: BTreeMap<String, LockfilePackageEntry>,
     /// Package groups by name for multi-arch support
-    pub package_groups: HashMap<String, Vec<String>>,
+    pub package_groups: BTreeMap<String, Vec<String>>,
 }
 
 fn sanitize_package_key_component(component: &str) -> String {
@@ -105,13 +110,16 @@ fn generate_package_key(architecture: &str, name: &str, version: &str) -> String
 impl Lockfile {
     pub const VERSION: u32 = 1;
 
-    pub fn new(config_hash: String, required_packages: Vec<Arc<str>>) -> Self {
+    pub fn new(config_hash: String, mut required_packages: Vec<Arc<str>>) -> Self {
+        required_packages.sort();
+        required_packages.dedup();
+
         Self {
             version: Self::VERSION,
             config_hash,
             required_packages,
-            packages: HashMap::new(),
-            package_groups: HashMap::new(),
+            packages: BTreeMap::new(),
+            package_groups: BTreeMap::new(),
         }
     }
 
@@ -121,22 +129,18 @@ impl Lockfile {
         resolved_packages: &std::collections::BTreeSet<Arc<BinaryPackageControlFile<'static>>>,
         binary_packages_by_arch: &HashMap<String, Vec<crate::repository::BinaryPackage>>,
     ) -> Result<(), crate::error::AptPrepError> {
-        // Create a mapping from package name+version to package key for dependency resolution
-        let mut package_lookup: HashMap<(String, String), String> = HashMap::new();
+        // Keep lookup sorted by package name (asc), package version (desc).
+        let mut package_lookup: BTreeMap<PackageNameAndVersion, String> = BTreeMap::new();
 
         // First pass: create all package entries and build lookup map
         for control_file in resolved_packages {
             let package_name = control_file.package()?;
             let package_version = control_file.version()?;
-            let _package_arch = control_file.architecture()?;
-
-            // Generate package key
+            let package_name_and_version =
+                PackageNameAndVersion::from_control_file(package_name, &package_version)?;
             let package_key =
                 generate_package_key(&architecture, package_name, &package_version.to_string());
-            package_lookup.insert(
-                (package_name.to_string(), package_version.to_string()),
-                package_key,
-            );
+            package_lookup.insert(package_name_and_version, package_key);
         }
 
         // Second pass: create package entries with dependencies
@@ -233,7 +237,11 @@ impl Lockfile {
             self.package_groups
                 .entry(package_name.to_string())
                 .or_default()
-                .push(package_key);
+                .push(package_key.clone());
+            if let Some(package_group) = self.package_groups.get_mut(package_name) {
+                package_group.sort();
+                package_group.dedup();
+            }
         }
 
         Ok(())
@@ -242,8 +250,8 @@ impl Lockfile {
     fn parse_dependencies(
         &self,
         control_file: &BinaryPackageControlFile,
-        package_lookup: &HashMap<(String, String), String>,
-        _architecture: &str,
+        package_lookup: &BTreeMap<PackageNameAndVersion, String>,
+        architecture: &str,
     ) -> Vec<String> {
         let mut dependencies = Vec::new();
 
@@ -251,37 +259,42 @@ impl Lockfile {
             // Parse the Depends field which contains comma-separated package names with optional versions
             for dep_part in depends_field.split(',') {
                 let dep_part = dep_part.trim();
+                let mut selected_package_key = None;
 
                 // Handle alternatives (packages separated by |)
                 for alternative in dep_part.split('|') {
                     let alternative = alternative.trim();
-
-                    // Extract just the package name (before any version constraints or parentheses)
-                    if let Some(package_name) = alternative.split_whitespace().next() {
-                        let package_name = package_name.trim();
-
-                        // Remove any version constraints like (>= 1.0)
-                        let package_name = if let Some(paren_pos) = package_name.find('(') {
-                            &package_name[..paren_pos]
-                        } else {
-                            package_name
-                        };
-
-                        if !package_name.is_empty() {
-                            // Try to find the package key for this dependency
-                            // Note: We can't resolve exact versions here without more sophisticated dependency resolution
-                            // For now, we'll just record the dependency name as a package key pattern
-                            // This is a simplified approach for the initial implementation
-                            for ((lookup_name, _lookup_version), package_key) in package_lookup {
-                                if lookup_name == package_name
-                                    && !dependencies.contains(package_key)
-                                {
-                                    dependencies.push(package_key.clone());
-                                    break; // Only take the first match
-                                }
-                            }
-                        }
+                    if alternative.is_empty() {
+                        continue;
                     }
+
+                    let Ok(parsed_dependency) = SingleDependency::parse(alternative) else {
+                        tracing::warn!("Failed to parse dependency alternative: {}", alternative);
+                        continue;
+                    };
+
+                    if !arch_matches(&parsed_dependency, architecture) {
+                        continue;
+                    }
+
+                    if let Some((_, package_key)) = package_lookup
+                        .range(
+                            PackageNameAndVersion::range_start(&parsed_dependency.package)
+                                ..PackageNameAndVersion::range_end(&parsed_dependency.package),
+                        )
+                        .find(|(candidate_key, _)| {
+                            candidate_key.satisfies_dependency(&parsed_dependency)
+                        })
+                    {
+                        selected_package_key = Some(package_key.clone());
+                        break;
+                    }
+                }
+
+                if let Some(package_key) = selected_package_key
+                    && !dependencies.contains(&package_key)
+                {
+                    dependencies.push(package_key);
                 }
             }
         }
