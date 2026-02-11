@@ -1,0 +1,58 @@
+name: Snapshot Build
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  snapshot-linux-x86_64:
+    name: Snapshot (linux x86_64)
+    runs-on: ubuntu-latest
+    env:
+      SNAPSHOT_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
+      SNAPSHOT_ARTIFACT_SUFFIX: ${{ github.run_id }}-${{ github.run_attempt }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5.0.0
+
+      - name: Setup Bazel
+        uses: bazel-contrib/setup-bazel@0.15.0
+        with:
+          bazelisk-cache: true
+          bazelisk-version: "1.27.0"
+          disk-cache: ${{ github.workflow }}
+          repository-cache: true
+
+      - name: Build Linux x86_64 snapshot artifact
+        run: |
+          bazel build --config=release --platforms=//platforms:linux_x86_64 //:aptprep_linux_x86_64
+
+      - name: Prepare snapshot artifacts
+        run: |
+          mkdir -p snapshot-artifacts
+          cp bazel-bin/aptprep_linux_x86_64.tar snapshot-artifacts/aptprep-linux-x86_64-${SNAPSHOT_SHA}.tar
+          cat > snapshot-artifacts/BUILD_INFO.txt <<EOF
+          source_commit_sha=${SNAPSHOT_SHA}
+          built_commit_sha=${{ github.sha }}
+          ref=${{ github.ref }}
+          event_name=${{ github.event_name }}
+          run_id=${{ github.run_id }}
+          run_attempt=${{ github.run_attempt }}
+          EOF
+
+      - name: Upload snapshot artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: aptprep-snapshot-linux-x86_64-${{ env.SNAPSHOT_SHA }}-${{ env.SNAPSHOT_ARTIFACT_SUFFIX }}
+          path: snapshot-artifacts/*
+          if-no-files-found: error
+          retention-days: ${{ github.event_name == 'pull_request' && 7 || 30 }}

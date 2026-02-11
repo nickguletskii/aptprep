@@ -22,6 +22,12 @@ tar -xzf aptprep-linux-x86_64.tar.gz
 chmod +x aptprep
 ```
 
+### Snapshot Builds (CI)
+
+For every commit on `main` and every commit in pull requests targeting `main`, GitHub Actions publishes a downloadable snapshot artifact from the `Snapshot Build` workflow.
+
+Download it from the workflow run's **Artifacts** section.
+
 ### From Source
 
 ```bash
