@@ -70,7 +70,11 @@ pub async fn run_download(config_path: &str, lockfile_path: &str) -> Result<(), 
                 message: format!("Invalid download URL {}: {}", package.download_url, e),
             })?;
 
-        let base_url = format!("{}://{}", url.scheme(), url.host_str().unwrap_or(""));
+        let mut base_url_url = url.clone();
+        base_url_url.set_path("");
+        base_url_url.set_query(None);
+        base_url_url.set_fragment(None);
+        let base_url = base_url_url.as_str().trim_end_matches('/').to_string();
         let rel_path = url.path().to_string();
 
         download_items.push(DownloadItem {
