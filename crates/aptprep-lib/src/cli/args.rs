@@ -12,6 +12,10 @@ pub enum Command {
         config_path: String,
         lockfile_path: String,
     },
+    GeneratePackagesFileFromLockfile {
+        config_path: String,
+        lockfile_path: String,
+    },
 }
 
 pub struct Args {
@@ -76,6 +80,28 @@ pub fn parse_args() -> Args {
                         .default_value("aptprep.lock"),
                 ),
         )
+        .subcommand(
+            clap::Command::new("generate_packages_file_from_lockfile")
+                .about("Read lockfile and generate a Packages index file in output path")
+                .arg(
+                    Arg::new("config")
+                        .short('c')
+                        .long("config")
+                        .value_name("FILE")
+                        .help("Sets a custom config file")
+                        .required(false)
+                        .default_value("config.yaml"),
+                )
+                .arg(
+                    Arg::new("lockfile")
+                        .short('l')
+                        .long("lockfile")
+                        .value_name("FILE")
+                        .help("Sets the input lockfile path")
+                        .required(false)
+                        .default_value("aptprep.lock"),
+                ),
+        )
         .get_matches();
 
     let log_level = match matches.get_count("verbose") {
@@ -115,8 +141,22 @@ pub fn parse_args() -> Args {
                 .expect("Default lockfile path should exist")
                 .clone(),
         },
+        Some(("generate_packages_file_from_lockfile", sub_matches)) => {
+            Command::GeneratePackagesFileFromLockfile {
+                config_path: sub_matches
+                    .get_one::<String>("config")
+                    .expect("Default config path should exist")
+                    .clone(),
+                lockfile_path: sub_matches
+                    .get_one::<String>("lockfile")
+                    .expect("Default lockfile path should exist")
+                    .clone(),
+            }
+        }
         _ => {
-            eprintln!("No subcommand provided. Use 'lock' or 'download'.");
+            eprintln!(
+                "No subcommand provided. Use 'lock', 'download', or 'generate_packages_file_from_lockfile'."
+            );
             std::process::exit(1);
         }
     };
