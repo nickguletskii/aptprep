@@ -74,7 +74,7 @@ impl LockfilePackageEntry {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Lockfile {
     /// Version of the lockfile format
     pub version: u32,
