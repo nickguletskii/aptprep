@@ -22,12 +22,13 @@ pub enum DistributionDef {
 pub struct Config {
     pub source_repositories: Vec<Arc<SourceRepository>>,
     pub packages: Vec<Arc<str>>,
+    #[serde(default)]
     pub output: OutputConfig,
 }
 
-#[derive(Clone, Debug, Deserialize, Serialize)]
-#[serde(deny_unknown_fields)]
+#[derive(Clone, Debug, Default, Deserialize, Serialize)]
+#[serde(default, deny_unknown_fields)]
 pub struct OutputConfig {
-    pub path: PathBuf,
+    pub path: Option<PathBuf>,
     pub target_architectures: Vec<String>,
 }

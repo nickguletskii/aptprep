@@ -1,4 +1,4 @@
-use super::types::DownloadItem;
+use super::types::{DownloadAndCheckOptions, DownloadItem};
 use crate::verification::content_digest_hasher::ContentDigestVerifier;
 use debian_packaging::checksum::AnyContentDigest;
 use eyre::{Result, WrapErr, eyre};
@@ -32,11 +32,7 @@ fn build_http_operator(
 pub async fn download_and_check_all(
     items: Vec<DownloadItem>,
     output_dir: impl AsRef<std::path::Path>,
-    // Tuning knobs; feel free to wire from config/CLI if needed
-    max_concurrency_per_host: usize,
-    max_retries: usize,
-    download_parallelism: usize,
-    checking_parallelism: usize,
+    options: DownloadAndCheckOptions,
 ) -> Result<()> {
     // Build per-base operator so multiple items from the same repo reuse the same HTTP client.
     let mut per_base: HashMap<String, Operator> = HashMap::new();
@@ -44,7 +40,11 @@ pub async fn download_and_check_all(
     for it in &items {
         let key = it.base_url.as_str().to_string();
         if let std::collections::hash_map::Entry::Vacant(e) = per_base.entry(key) {
-            let op = build_http_operator(&it.base_url, max_concurrency_per_host, max_retries)?;
+            let op = build_http_operator(
+                &it.base_url,
+                options.max_concurrency_per_host,
+                options.max_retries,
+            )?;
             e.insert(op);
         }
     }
@@ -52,8 +52,8 @@ pub async fn download_and_check_all(
 
     // Use a bounded unordered stream for parallel downloads across bases.
     // Throttling per-host is handled by ConcurrentLimitLayer; this controls overall parallelism.
-    let download_semaphore = Arc::new(tokio::sync::Semaphore::new(download_parallelism));
-    let checking_semaphore = Arc::new(tokio::sync::Semaphore::new(checking_parallelism));
+    let download_semaphore = Arc::new(tokio::sync::Semaphore::new(options.download_parallelism));
+    let checking_semaphore = Arc::new(tokio::sync::Semaphore::new(options.checking_parallelism));
 
     let mut futs = FuturesUnordered::new();
     for it in items {

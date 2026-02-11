@@ -14,7 +14,7 @@ pub fn create_test_config() -> Config {
         })],
         output: OutputConfig {
             target_architectures: vec!["amd64".to_string()],
-            path: "/tmp/test_output".into(),
+            path: Some("/tmp/test_output".into()),
         },
     }
 }

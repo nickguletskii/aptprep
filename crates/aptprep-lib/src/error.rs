@@ -21,6 +21,9 @@ pub enum AptPrepError {
     #[error("Lockfile validation failed: {details}")]
     LockfileValidation { details: String },
 
+    #[error("CLI argument validation failed: {details}")]
+    CliArgumentValidation { details: String },
+
     #[error("Failed to download package {package} from {url}: {reason}")]
     PackageDownload {
         package: String,

@@ -1,4 +1,3 @@
-use crate::config::OutputConfig;
 use crate::download::DownloadItem;
 use crate::error::AptPrepError;
 use crate::lockfile::Lockfile;
@@ -12,7 +11,7 @@ use itertools::Itertools;
 use std::collections::{BTreeSet, HashMap};
 use std::io::BufWriter;
 use std::ops::Deref;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 
 pub fn generate_packages_file(
@@ -21,7 +20,7 @@ pub fn generate_packages_file(
         Arc<BinaryPackageControlFile<'static>>,
         &BinaryPackage,
     >,
-    output_config: &OutputConfig,
+    output_dir: &Path,
 ) -> Result<(Vec<DownloadItem>, PathBuf), AptPrepError> {
     let mut fetches = Vec::new();
     let mut control_file = ControlFile::default();
@@ -74,13 +73,11 @@ pub fn generate_packages_file(
         control_file.add_paragraph(paragraph);
     }
 
-    let packages_path = output_config.path.join("Packages.aptprep");
+    let packages_path = output_dir.join("Packages.aptprep");
 
-    std::fs::create_dir_all(output_config.path.as_path()).map_err(|e| {
-        AptPrepError::DownloadDirectoryCreation {
-            path: output_config.path.clone(),
-            reason: e.to_string(),
-        }
+    std::fs::create_dir_all(output_dir).map_err(|e| AptPrepError::DownloadDirectoryCreation {
+        path: output_dir.to_path_buf(),
+        reason: e.to_string(),
     })?;
     let packages_file = std::fs::File::create(&packages_path).map_err(AptPrepError::Io)?;
     let mut writer = BufWriter::new(packages_file);
@@ -91,7 +88,7 @@ pub fn generate_packages_file(
 
 pub fn generate_packages_file_from_lockfile(
     lockfile: &Lockfile,
-    output_config: &OutputConfig,
+    output_path: &Path,
 ) -> Result<PathBuf, AptPrepError> {
     let mut control_file = ControlFile::default();
 
@@ -120,17 +117,18 @@ pub fn generate_packages_file_from_lockfile(
         }
     }
 
-    let packages_path = output_config.path.join("Packages");
+    let output_dir = output_path
+        .parent()
+        .filter(|path| !path.as_os_str().is_empty())
+        .unwrap_or_else(|| Path::new("."));
 
-    std::fs::create_dir_all(output_config.path.as_path()).map_err(|e| {
-        AptPrepError::DownloadDirectoryCreation {
-            path: output_config.path.clone(),
-            reason: e.to_string(),
-        }
+    std::fs::create_dir_all(output_dir).map_err(|e| AptPrepError::DownloadDirectoryCreation {
+        path: output_dir.to_path_buf(),
+        reason: e.to_string(),
     })?;
-    let packages_file = std::fs::File::create(&packages_path).map_err(AptPrepError::Io)?;
+    let packages_file = std::fs::File::create(output_path).map_err(AptPrepError::Io)?;
     let mut writer = BufWriter::new(packages_file);
     control_file.write(&mut writer).map_err(AptPrepError::Io)?;
 
-    Ok(packages_path)
+    Ok(output_path.to_path_buf())
 }

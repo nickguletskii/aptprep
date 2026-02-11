@@ -1,6 +1,18 @@
 use aptprep_e2e_tests::{create_test_config, setup_test_environment, wait_for_file_creation};
-use aptprep_lib::cli::run_lock;
+use aptprep_lib::cli::{Command, ResolvedCommand, resolve_command, run_lock};
 use aptprep_lib::lockfile::Lockfile;
+
+fn build_lock_params(config_path: &str, lockfile_path: &str) -> aptprep_lib::cli::LockParams {
+    let command = Command::Lock {
+        config_path: config_path.to_string(),
+        lockfile_path: lockfile_path.to_string(),
+        target_architectures: vec![],
+    };
+    match resolve_command(command).expect("Failed to resolve lock command") {
+        ResolvedCommand::Lock(params) => params,
+        _ => unreachable!("Resolved command type mismatch"),
+    }
+}
 
 #[tokio::test]
 async fn test_lockfile_generation_end_to_end() {
@@ -11,11 +23,11 @@ async fn test_lockfile_generation_end_to_end() {
     let config_path = temp_dir.path().join("config.json");
     let lockfile_path = temp_dir.path().join("aptprep.lock");
 
-    let result = run_lock(
+    let params = build_lock_params(
         config_path.to_str().unwrap(),
         lockfile_path.to_str().unwrap(),
-    )
-    .await;
+    );
+    let result = run_lock(params).await;
 
     assert!(
         result.is_ok(),
@@ -84,12 +96,13 @@ async fn test_lockfile_contains_expected_packages() {
     let config_path = temp_dir.path().join("config.json");
     let lockfile_path = temp_dir.path().join("aptprep.lock");
 
-    run_lock(
+    let params = build_lock_params(
         config_path.to_str().unwrap(),
         lockfile_path.to_str().unwrap(),
-    )
-    .await
-    .expect("Lockfile generation should succeed");
+    );
+    run_lock(params)
+        .await
+        .expect("Lockfile generation should succeed");
 
     let lockfile = Lockfile::load_from_file(&lockfile_path)
         .expect("Should be able to load generated lockfile");
@@ -123,19 +136,21 @@ async fn test_lockfile_reproducibility() {
     let lockfile_path1 = temp_dir.path().join("aptprep1.lock");
     let lockfile_path2 = temp_dir.path().join("aptprep2.lock");
 
-    run_lock(
+    let params1 = build_lock_params(
         config_path.to_str().unwrap(),
         lockfile_path1.to_str().unwrap(),
-    )
-    .await
-    .expect("First lockfile generation should succeed");
+    );
+    run_lock(params1)
+        .await
+        .expect("First lockfile generation should succeed");
 
-    run_lock(
+    let params2 = build_lock_params(
         config_path.to_str().unwrap(),
         lockfile_path2.to_str().unwrap(),
-    )
-    .await
-    .expect("Second lockfile generation should succeed");
+    );
+    run_lock(params2)
+        .await
+        .expect("Second lockfile generation should succeed");
 
     let lockfile1 =
         Lockfile::load_from_file(&lockfile_path1).expect("Should be able to load first lockfile");
