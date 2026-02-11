@@ -25,7 +25,10 @@ pub async fn run_download(config_path: &str, lockfile_path: &str) -> Result<(), 
     }
 
     // Verify required packages match
-    if lockfile.required_packages != app_config.packages {
+    let mut sorted_required_packages = app_config.packages.clone();
+    sorted_required_packages.sort();
+    sorted_required_packages.dedup();
+    if lockfile.required_packages != sorted_required_packages {
         return Err(AptPrepError::LockfileValidation {
             details: "Required packages in lockfile don't match configuration. \
              Please regenerate the lockfile with 'aptprep lock'"
