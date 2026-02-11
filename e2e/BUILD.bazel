@@ -1,0 +1,25 @@
+"""
+End-to-end tests for aptprep using Podman
+"""
+
+load(":podman_apt_test.bzl", "podman_apt_e2e_test")
+
+# Basic e2e test with minimal package list
+podman_apt_e2e_test(
+    name = "podman_apt_repo_test",
+    timeout = "long",
+    binary = "//crates/aptprep-cli:aptprep",
+    config = ":test_config.yaml",
+    container_name = "aptprep-e2e-test",
+    packages = [
+        "curl",
+        "vim",
+        "wget",
+    ],
+)
+
+# Alias for common test invocation
+alias(
+    name = "e2e_test",
+    actual = ":podman_apt_repo_test",
+)
