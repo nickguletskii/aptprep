@@ -25,7 +25,7 @@ pub struct Args {
 
 pub fn parse_args() -> Args {
     let matches = clap::Command::new("aptprep")
-        .version("1.0.0")
+        .version(env!("CARGO_PKG_VERSION"))
         .author("Nick Guletskii")
         .about("Resolve all Debian package dependencies needed to install a given set of Debian packages behind an air gap")
         .arg(
