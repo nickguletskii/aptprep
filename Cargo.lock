@@ -149,7 +149,7 @@ checksum = "5f0e0fee31ef5ed1ba1316088939cea399010ed7731dba877ed44aeb407a75ea"
 
 [[package]]
 name = "aptprep-cli"
-version = "0.1.3"
+version = "0.3.0"
 dependencies = [
  "aptprep-lib",
  "clap",
@@ -159,7 +159,7 @@ dependencies = [
 
 [[package]]
 name = "aptprep-e2e-tests"
-version = "0.1.3"
+version = "0.3.0"
 dependencies = [
  "aptprep-lib",
  "assert_fs",
@@ -174,7 +174,7 @@ dependencies = [
 
 [[package]]
 name = "aptprep-lib"
-version = "0.1.3"
+version = "0.3.0"
 dependencies = [
  "bumpalo",
  "clap",
@@ -2392,9 +2392,9 @@ dependencies = [
 
 [[package]]
 name = "keccak"
-version = "0.1.5"
+version = "0.1.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ecc2af9a1119c51f12a14607e783cb977bde58bc069ff0c3da1095e635d70654"
+checksum = "cb26cec98cce3a3d96cbb7bced3c4b16e3d13f27ec56dbd62cbc8f39cfb9d653"
 dependencies = [
  "cpufeatures",
 ]
